@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GranGuard – Camp/Scam Check</title>
+  <meta name="description" content="Upload a screenshot or paste a link. Get a one‑word verdict with a % and a short explanation. Make your grandma safe." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tesseract.js for in‑browser OCR -->
+  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b0d10;         /* near‑black */
+      --panel: #11151a;      /* card bg */
+      --muted: #778899;      /* slate */
+      --text: #e9eef5;       /* almost white */
+      --accent: #6aa6ff;     /* primary */
+      --accent-2: #8ef0c5;   /* secondary */
+      --danger: #ff6a7a;     /* red */
+      --warn: #ffd166;       /* yellow */
+      --ok: #7ee787;         /* green */
+      --ring: #20252c;       /* ring bg */
+      --border: #1c2128;     /* borders */
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 20px;
+      --radius-sm: 14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% -10%,rgba(106,166,255,.15),transparent 60%),
+                  radial-gradient(900px 700px at 120% 10%,rgba(142,240,197,.10),transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent)}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:16px; padding:8px 0 18px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.2px
+    }
+    .brand .logo{width:32px;height:32px;border-radius:10px;background:
+      conic-gradient(from 210deg, var(--accent), var(--accent-2));
+      box-shadow: inset 0 0 0 2px #0005, 0 6px 14px #0008;
+    }
+    .badge{font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:#b7c3cf}
+
+    .grid{
+      display:grid;gap:18px;grid-template-columns:1fr; 
+    }
+    @media (min-width: 980px){
+      .grid{grid-template-columns: 1.1fr .9fr}
+    }
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
+      border:1px solid var(--border); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow);
+    }
+    .card h2{margin:0 0 12px 0; font-size:18px; font-weight:700}
+    .sub{color:#a7b3c0;font-size:13px;margin-top:6px}
+    label{font-weight:600;font-size:13px;margin-bottom:8px;display:block;color:#c7d3df}
+
+    .input, textarea{width:100%;background:#0e1217;border:1px solid var(--border); border-radius:12px; color:var(--text);
+      padding:12px 14px; font-size:14px; outline:none; transition:.15s border-color ease;}
+    .input:focus, textarea:focus{border-color:#2a3340}
+    textarea{min-height:100px;resize:vertical}
+
+    .row{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:680px){.row{grid-template-columns:1fr 1fr}}
+
+    .drop{
+      border:1.5px dashed #2a3340; border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px;
+      background:#0e1217; cursor:pointer; transition:.15s border-color ease, .15s background ease;
+    }
+    .drop:hover{border-color:#3a4654;background:#0f1419}
+    .drop input{display:none}
+
+    .btns{display:flex; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:none; background:linear-gradient(180deg,#1a2230,#121720); color:var(--text); padding:12px 14px; 
+      border-radius:12px; font-weight:700; cursor:pointer; border:1px solid #263042; box-shadow: inset 0 1px 0 #ffffff0a;
+    }
+    .btn[aria-busy="true"]{opacity:.7;pointer-events:none}
+    .btn.primary{background:linear-gradient(180deg, #2b67ff, #214ed9); border-color:#2750d7}
+    .btn.ghost{background:transparent}
+
+    /* Verdict */
+    .verdict-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+    .ring{
+      --pct: 0; width:110px; height:110px; border-radius:50%;
+      background: conic-gradient(var(--ring) calc(360deg - (var(--pct) * 3.6deg)), var(--danger) 0);
+      display:grid; place-items:center; position:relative; isolation:isolate;
+    }
+    .ring::before{content:""; position:absolute; inset:8px; border-radius:50%; background:#0d1116; border:1px solid var(--border)}
+    .ring > span{position:relative; font-weight:800; font-size:20px}
+
+    .pill{padding:8px 12px; border-radius:999px; font-weight:800; font-size:12px; letter-spacing:.3px; text-transform:uppercase}
+    .pill.fake{background:#3d0e16; color:#ff9aa6; border:1px solid #5e1c26}
+    .pill.caution{background:#3a2b0d; color:#ffe08a; border:1px solid #5b4415}
+    .pill.real{background:#0f2b1c; color:#99f5bf; border:1px solid #1d5a3b}
+
+    .explain{font-size:14px; color:#cbd6e2}
+    .list{margin:6px 0 0 0; padding-left:18px}
+
+    .bars{display:grid; gap:8px}
+    .bar{display:grid; grid-template-columns:160px 1fr; align-items:center; gap:10px}
+    .bar .label{font-size:12px; color:#a7b3c0}
+    .bar .track{height:10px; background:#0d1218; border:1px solid var(--border); border-radius:999px; overflow:hidden}
+    .bar .fill{height:100%; width:0%; background:linear-gradient(90deg, #ff6a7a, #ffd166, #7ee787)}
+
+    .mini{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .mini .chip{border:1px solid var(--border); border-radius:999px; padding:6px 10px; font-size:12px; color:#a7b3c0}
+
+    .muted{color:#8c98a6}
+    .hidden{display:none}
+
+    footer{margin:30px 0 20px; color:#97a5b4; font-size:12px}
+    .hr{height:1px; background:linear-gradient(90deg, transparent, #20252c, transparent); margin:16px 0}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div style="font-size:18px;line-height:1;font-weight:800">GranGuard</div>
+          <div class="sub">“make your grandma safe.”</div>
+        </div>
+      </div>
+      <div class="badge">Draft v1 • single file</div>
+    </header>
+
+    <div class="grid">
+      <!-- Input column -->
+      <section class="card" aria-label="Input">
+        <h2>1) Add evidence</h2>
+        <div class="sub">Paste links, add a claimed brand, or drop screenshots. You can edit OCR text before analysis.</div>
+        <div class="hr"></div>
+
+        <label for="urls">Links (one per line)</label>
+        <textarea id="urls" placeholder="https://example.com\nhttps://t.me/somechannel"></textarea>
+
+        <div class="row">
+          <div>
+            <label for="claimed">Claimed brand/company (optional)</label>
+            <input id="claimed" class="input" placeholder="e.g., PayPal" />
+          </div>
+          <div>
+            <label for="phone">Phone (optional)</label>
+            <input id="phone" class="input" placeholder="e.g., +1 202 555 0119" />
+          </div>
+        </div>
+
+        <label for="context">Short context (optional)</label>
+        <textarea id="context" placeholder="What happened? Where did you see it? Did they ask for money or passwords?"></textarea>
+
+        <label>Screenshot(s)</label>
+        <div id="drop" class="drop" tabindex="0" role="button" aria-label="Upload screenshots">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 16V4m0 12l-4-4m4 4l4-4" stroke="#9eb1c5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="3" y="16" width="18" height="5" rx="2" stroke="#9eb1c5" stroke-width="1.6"/>
+          </svg>
+          <div>
+            <div style="font-weight:700">Drop images here or click to upload</div>
+            <div class="muted">PNG/JPG/WebP. We’ll OCR them locally in your browser.</div>
+          </div>
+          <input id="file" type="file" accept="image/*" multiple />
+        </div>
+
+        <div id="ocrWrap" class="card" style="margin-top:14px; background:#0b0f14">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px">
+            <h2 style="margin:0">OCR Text (editable)</h2>
+            <span id="ocrStatus" class="badge">idle</span>
+          </div>
+          <textarea id="ocrText" placeholder="Extracted text from screenshots will appear here. You can edit it before analysis."></textarea>
+          <div class="mini">
+            <button id="btnOCR" class="btn">Run OCR</button>
+            <button id="btnClearOCR" class="btn ghost">Clear</button>
+          </div>
+        </div>
+
+        <div class="btns" style="margin-top:12px">
+          <button id="btnAnalyze" class="btn primary">Analyze</button>
+          <button id="btnSample" class="btn ghost">Try sample</button>
+        </div>
+      </section>
+
+      <!-- Output column -->
+      <section class="card" aria-label="Result">
+        <h2>2) Result</h2>
+        <div class="verdict-wrap" style="margin-top:6px">
+          <div class="ring" id="ring" style="--pct:0"><span id="pct">0%</span></div>
+          <div>
+            <div id="pill" class="pill real">REAL</div>
+            <div id="headline" style="font-size:18px;font-weight:800;margin-top:8px">Waiting for input…</div>
+            <div id="oneLine" class="sub" style="margin-top:6px">One‑line: <span class="muted">(empty)</span></div>
+            <div class="mini">
+              <button id="btnCopySimple" class="btn ghost">Copy one‑line</button>
+              <button id="btnCopyDetails" class="btn ghost">Copy details</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div>
+          <div class="explain" id="explain">Add links or run OCR, then click Analyze.</div>
+          <ul class="list" id="flags"></ul>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="bars" id="bars">
+          <!-- dynamic risk bars -->
+        </div>
+
+        <div class="mini" style="margin-top:14px">
+          <span class="chip">No server • All local</span>
+          <span class="chip">Editable OCR</span>
+          <span class="chip">One‑word verdict</span>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <div class="hr"></div>
+      <div>GranGuard is a consumer safety demo. It does not give legal/financial advice. If you already paid or shared credentials, contact your bank/platform using numbers from their official website.</div>
+    </footer>
+  </div>
+
+  <script>
+    // ===== Utilities =====
+    const byId = (id) => document.getElementById(id);
+    const urlsEl = byId('urls');
+    const claimedEl = byId('claimed');
+    const phoneEl = byId('phone');
+    const contextEl = byId('context');
+    const fileInput = byId('file');
+    const drop = byId('drop');
+    const ocrText = byId('ocrText');
+    const ocrStatus = byId('ocrStatus');
+    const btnOCR = byId('btnOCR');
+    const btnClearOCR = byId('btnClearOCR');
+
+    const btnAnalyze = byId('btnAnalyze');
+    const btnSample = byId('btnSample');
+    const pctEl = byId('pct');
+    const ringEl = byId('ring');
+    const pillEl = byId('pill');
+    const headlineEl = byId('headline');
+    const oneLineEl = byId('oneLine');
+    const explainEl = byId('explain');
+    const flagsEl = byId('flags');
+    const barsEl = byId('bars');
+    const btnCopySimple = byId('btnCopySimple');
+    const btnCopyDetails = byId('btnCopyDetails');
+
+    // Drag & drop
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+    let images = []; // store File objects
+
+    function handleFiles(fileList){
+      images = [...fileList].filter(f => f.type.startsWith('image/'));
+      ocrStatus.textContent = images.length ? `${images.length} image(s) ready` : 'idle';
+    }
+
+    // ===== OCR with Tesseract =====
+    async function runOCR(){
+      if (!images.length){
+        ocrStatus.textContent = 'no images';
+        return;
+      }
+      btnOCR.setAttribute('aria-busy','true');
+      ocrStatus.textContent = 'starting…';
+      let text = '';
+      for (let i=0;i<images.length;i++){
+        const file = images[i];
+        ocrStatus.textContent = `OCR ${i+1}/${images.length}…`;
+        try{
+          const { data } = await Tesseract.recognize(file, 'eng', {
+            logger: m => {
+              if (m.status === 'recognizing text'){
+                ocrStatus.textContent = `OCR ${i+1}/${images.length}… ${Math.round(m.progress*100)}%`;
+              }
+            }
+          });
+          text += '\n' + (data.text || '');
+        }catch(err){
+          console.error('OCR error', err);
+        }
+      }
+      ocrText.value = (ocrText.value + '\n' + text).trim();
+      btnOCR.removeAttribute('aria-busy');
+      ocrStatus.textContent = 'done';
+    }
+    btnOCR.addEventListener('click', runOCR);
+    btnClearOCR.addEventListener('click', () => { ocrText.value = ''; ocrStatus.textContent = 'cleared'; });
+
+    // ===== Domain/URL helpers =====
+    function parseUrls(raw){
+      const lines = (raw||'').split(/\n|\s|,/).map(s=>s.trim()).filter(Boolean);
+      const urls = [];
+      for (const s of lines){
+        try{
+          const u = new URL(s);
+          urls.push(u);
+        }catch{ /* ignore invalid */ }
+      }
+      return urls;
+    }
+    function baseDomain(host){
+      // naive registrable domain: join last two labels, or keep host if ip/localhost
+      const parts = host.split('.');
+      if (parts.length <= 2) return host.toLowerCase();
+      const tlds2 = ['co.uk','com.au','co.nz','com.br','com.tr'];
+      const last2 = parts.slice(-2).join('.');
+      const last3 = parts.slice(-3).join('.');
+      if (tlds2.includes(last3)) return last3.toLowerCase();
+      return last2.toLowerCase();
+    }
+    function sld(host){
+      const bd = baseDomain(host);
+      return bd.split('.')[0];
+    }
+    function normalizeBrand(str){
+      return (str||'')
+        .toLowerCase()
+        .replace(/(inc\.?|ltd\.?|llc|bv|gmbh|s\.?a\.?\b|co\.?)/g,'')
+        .replace(/[^a-z0-9]/g,'')
+        .trim();
+    }
+
+    function looksHomoglyphy(domain){
+      // simple checks: suspicious chars replaced in well-known brands
+      const map = { '0':'o','1':'l','3':'e','5':'s','7':'t','@':'a','$':'s','¡':'i','¡':'i' };
+      const d = domain.toLowerCase();
+      let sus = 0;
+      for (const [k,v] of Object.entries(map)){
+        if (d.includes(k)) sus++;
+      }
+      // hyphenated three+ parts or random digits
+      if ((d.match(/-/g)||[]).length>=2) sus++;
+      if (/\d{3,}/.test(d)) sus++;
+      return sus>=2;
+    }
+
+    // ===== Heuristic scoring =====
+    function analyze(){
+      // Collect inputs
+      const urlObjs = parseUrls(urlsEl.value);
+      const phones = (phoneEl.value||'').match(/\+?[\d\s\-()]{7,}/g) || [];
+      const brand = claimedEl.value.trim();
+      const ctx = contextEl.value.trim();
+      const text = ocrText.value + (ctx? ('\n'+ctx):'');
+      const textLower = text.toLowerCase();
+
+      const foundDomains = urlObjs.map(u=>u.host.toLowerCase());
+      const foundSLDs = foundDomains.map(sld);
+
+      const art = {
+        found_domains: foundDomains,
+        found_handles: (text.match(/@[a-z0-9_\.\-]{3,}/gi) || []),
+        found_phones: phones,
+        payment_methods_detected: [],
+        entities_claimed: brand? [brand] : [],
+        key_phrases: []
+      };
+
+      // keywords
+      const KW = {
+        urgency:[ 'urgent','immediately','final notice','limited time','only \d+ left','act now','verify now','24 hours' ],
+        threats:[ 'account.*(suspend|close|terminate)','legal action','police','lawsuit','pay a fine' ],
+        rewards:[ 'you(?:’|\')?ve won','congratulations','gift','prize','jackpot','bonus' ],
+        payments:[ 'bank transfer','wire','crypto','bitcoin','gift card','western union','moneygram','usdt','trx' ],
+        pii:[ 'otp','one[- ]time password','seed phrase','mnemonic','recovery phrase','cvv','card number','routing number' ],
+        news:[ 'breaking','shocking','you won\'t believe','share before','media won\'t','truth about' ],
+        policy:[ 'privacy policy','refund','returns','terms','contact','imprint','address' ]
+      };
+      function countMatches(patterns){
+        let n=0; const notes=[];
+        for(const p of patterns){
+          const re=new RegExp(p,'i');
+          const m = text.match(re);
+          if(m){ n++; notes.push(m[0]); }
+        }
+        return { n, notes };
+      }
+
+      const urgency = countMatches(KW.urgency);
+      const threats = countMatches(KW.threats);
+      const rewards = countMatches(KW.rewards);
+      const payments = countMatches(KW.payments);
+      const pii = countMatches(KW.pii);
+      const newsSens = countMatches(KW.news);
+      const hasPolicyWords = countMatches(KW.policy).n>0;
+
+      // Payment methods detected (from text heuristics)
+      art.payment_methods_detected = [ ...new Set([ ...payments.notes.map(x=>x.toLowerCase()) ]) ];
+
+      // Identity & consistency
+      let idScore = 0; const idNotes = [];
+      if (brand && foundDomains.length){
+        const nBrand = normalizeBrand(brand);
+        for (const d of foundDomains){
+          const dSLD = sld(d);
+          if (!dSLD.includes(nBrand) && !nBrand.includes(dSLD)){
+            idScore += 40; idNotes.push(`domain ${d} doesn\'t match brand ${brand}`);
+          }
+          if (looksHomoglyphy(d)){ idScore += 25; idNotes.push(`suspicious domain pattern: ${d}`); }
+        }
+      }
+      if (foundDomains.some(d=>/-.+-.+/.test(d))) { idScore += 10; idNotes.push('hyphenated domain'); }
+      if (foundDomains.some(d=>/support|secure|verify|help/.test(d))) { idScore += 10; idNotes.push('impersonation keyword in domain'); }
+      idScore = Math.min(100, idScore);
+
+      // Technical hygiene
+      let techScore = 0; const techNotes = [];
+      if (payments.n>0){ techScore += 25; techNotes.push('non‑reversible/crypto/gift card mentioned'); }
+      if (textLower.includes('http://')){ techScore += 10; techNotes.push('non‑HTTPS link referenced'); }
+      if (/trust|secure|verified/.test(textLower) && /badge|logo/.test(textLower)) { techScore += 10; techNotes.push('fake trust badge language'); }
+      if (!hasPolicyWords && text.trim().length>40){ techScore += 20; techNotes.push('missing policy/contact terms in text'); }
+      techScore = Math.min(100, techScore);
+
+      // Social engineering
+      let socScore = 0; const socNotes = [];
+      if (urgency.n>0){ socScore += 20; socNotes.push('urgency'); art.key_phrases.push(...urgency.notes); }
+      if (threats.n>0){ socScore += 30; socNotes.push('threatening language'); art.key_phrases.push(...threats.notes); }
+      if (rewards.n>0){ socScore += 20; socNotes.push('reward bait'); art.key_phrases.push(...rewards.notes); }
+      if (pii.n>0){ socScore += 30; socNotes.push('requests sensitive data'); art.key_phrases.push(...pii.notes); }
+      socScore = Math.min(100, socScore);
+
+      // Company clues
+      let compScore = 0; const compNotes = [];
+      if (!/\b(address|street|st\.|road|rd\.|suite|privacy|terms|imprint|contact)\b/i.test(text)){
+        compScore += 20; compNotes.push('no obvious address/policy terms');
+      }
+      if (/\b(gmail\.com|yahoo\.com|outlook\.com)\b/i.test(text)){
+        compScore += 10; compNotes.push('free mailbox as contact');
+      }
+      if (/\bstock photo\b/i.test(text)){ compScore += 5; compNotes.push('stock photo mention'); }
+      compScore = Math.min(100, compScore);
+
+      // Phone / message clues
+      let phoneScore = 0; const phoneNotes = [];
+      if (phones.length && (payments.n>0 || socScore>20)){
+        phoneScore += 30; phoneNotes.push('money request via unknown number');
+      }
+      if (/(whatsapp|telegram|move to chat)/i.test(text)){
+        phoneScore += 15; phoneNotes.push('move off‑platform');
+      }
+      phoneScore = Math.min(100, phoneScore);
+
+      // Fake news claims (light)
+      let newsScore = 0; const newsNotes = [];
+      if (newsSens.n>0){ newsScore += 25; newsNotes.push('sensational headline style'); }
+      if (!/\b(source|according to|reuters|ap|bbc|guardian|press release|official)\b/i.test(text) && text.trim()){
+        newsScore += 15; newsNotes.push('no clear sources cited');
+      }
+      if (!/\b\d{4}\b/.test(text)){ newsScore += 5; newsNotes.push('no dates visible'); }
+      newsScore = Math.min(100, newsScore);
+
+      // Deepfake signals – heuristic placeholder
+      let dfScore = 0; const dfNotes = [];
+      if (/deepfake|ai[- ]generated|midjourney|stable diffusion|face swap/i.test(text)){
+        dfScore += 35; dfNotes.push('AI/manipulation keywords present');
+      }
+
+      // Weights
+      const weights = {
+        identity_consistency: .25,
+        technical_hygiene: .15,
+        social_engineering: .20,
+        company_clues: .10,
+        phone_message: .10,
+        fake_news_claims: .10,
+        deepfake_signals: .10
+      };
+
+      const subs = {
+        identity_consistency: { score: idScore, notes: idNotes },
+        technical_hygiene: { score: techScore, notes: techNotes },
+        social_engineering: { score: socScore, notes: socNotes },
+        company_clues: { score: compScore, notes: compNotes },
+        phone_message: { score: phoneScore, notes: phoneNotes },
+        fake_news_claims: { score: newsScore, notes: newsNotes },
+        deepfake_signals: { score: dfScore, notes: dfNotes }
+      };
+
+      let risk = 0;
+      for (const [k,v] of Object.entries(subs)){
+        risk += (v.score || 0) * (weights[k] || 0);
+      }
+      const riskScore = Math.round(risk);
+
+      // Verdict one‑word + color
+      let verdict = 'REAL';
+      let pillClass = 'real';
+      if (riskScore >= 60){ verdict = 'FAKE'; pillClass = 'fake'; }
+      else if (riskScore >= 40){ verdict = 'CAUTION'; pillClass = 'caution'; }
+
+      // Top red flags
+      const redflags = Object.entries(subs)
+        .flatMap(([k,v]) => (v.notes||[]).map(n => ({k, n, s:v.score})))
+        .sort((a,b)=>b.s-a.s)
+        .slice(0,6)
+        .map(x=>x.n.replace(/\.$/,'').trim());
+
+      // Render UI
+      ringEl.style.setProperty('--pct', riskScore);
+      pctEl.textContent = riskScore + '%';
+      pillEl.textContent = verdict;
+      pillEl.className = `pill ${pillClass}`;
+      headlineEl.textContent = verdict === 'REAL' ? 'Low risk signals overall.' :
+        (verdict === 'CAUTION' ? 'Some red flags. Verify independently.' : 'Multiple red flags. Do NOT proceed.');
+      oneLineEl.innerHTML = `One‑line: <strong>${verdict} ${riskScore}%</strong>`;
+
+      explainEl.textContent = redflags.length ? 'Why we think this:' : 'No strong signals found.';
+      flagsEl.innerHTML = '';
+      redflags.forEach(f=>{
+        const li=document.createElement('li'); li.textContent = f; flagsEl.appendChild(li);
+      });
+
+      // Bars
+      const labels = {
+        identity_consistency: 'Identity & Consistency',
+        technical_hygiene: 'Technical Hygiene',
+        social_engineering: 'Social Engineering',
+        company_clues: 'Company Clues',
+        phone_message: 'Phone/Message',
+        fake_news_claims: 'Fake News Heuristics',
+        deepfake_signals: 'Deepfake Signals'
+      };
+      barsEl.innerHTML = '';
+      for (const [k,v] of Object.entries(subs)){
+        const row = document.createElement('div'); row.className='bar';
+        const lab = document.createElement('div'); lab.className='label'; lab.textContent = `${labels[k]} (${v.score})`;
+        const track = document.createElement('div'); track.className='track';
+        const fill = document.createElement('div'); fill.className='fill'; fill.style.width = `${v.score}%`;
+        track.appendChild(fill); row.appendChild(lab); row.appendChild(track); barsEl.appendChild(row);
+      }
+
+      // Copy helpers
+      const details = `${verdict} ${riskScore}% — ${redflags.join('; ') || 'No strong red flags.'}`;
+      btnCopySimple.onclick = async ()=>{ await navigator.clipboard.writeText(`${verdict} ${riskScore}%`); btnCopySimple.textContent='Copied!'; setTimeout(()=>btnCopySimple.textContent='Copy one‑line',1200)};
+      btnCopyDetails.onclick = async ()=>{ await navigator.clipboard.writeText(details); btnCopyDetails.textContent='Copied!'; setTimeout(()=>btnCopyDetails.textContent='Copy details',1200)};
+    }
+
+    btnAnalyze.addEventListener('click', analyze);
+
+    // Sample to demo the flow quickly
+    btnSample.addEventListener('click', ()=>{
+      urlsEl.value = 'http://paypalsecure-help.co/support';
+      claimedEl.value = 'PayPal';
+      contextEl.value = 'Got this link via SMS saying my account is locked and to verify now.';
+      ocrText.value = 'Verify now to avoid account termination. Pay with Bitcoin or gift card.';
+      analyze();
+    });
+
+    // Accessibility: allow Enter on drop zone to open file picker
+    drop.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); fileInput.click(); }});
+  </script>
+</body>
+</html>
