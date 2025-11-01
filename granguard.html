@@ -3,400 +3,589 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GranGuard – Camp/Scam Check</title>
-  <meta name="description" content="Upload a screenshot or paste a link. Get a one‑word verdict with a % and a short explanation. Make your grandma safe." />
+  <title>GranGuard – Friendly Scam &amp; Fake News Checker</title>
+  <meta name="description" content="GranGuard helps grandparents feel safer online. Drop an image or paste a link to see if something smells fishy." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Tesseract.js for in‑browser OCR -->
+  <!-- Tesseract.js for in-browser OCR -->
   <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
   <style>
-    :root{
-      --bg: #0b0d10;         /* near‑black */
-      --panel: #11151a;      /* card bg */
-      --muted: #778899;      /* slate */
-      --text: #e9eef5;       /* almost white */
-      --accent: #6aa6ff;     /* primary */
-      --accent-2: #8ef0c5;   /* secondary */
-      --danger: #ff6a7a;     /* red */
-      --warn: #ffd166;       /* yellow */
-      --ok: #7ee787;         /* green */
-      --ring: #20252c;       /* ring bg */
-      --border: #1c2128;     /* borders */
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 20px;
-      --radius-sm: 14px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: radial-gradient(1200px 800px at 20% -10%,rgba(106,166,255,.15),transparent 60%),
-                  radial-gradient(900px 700px at 120% 10%,rgba(142,240,197,.10),transparent 60%),
-                  var(--bg);
-      color:var(--text);
-    }
-    a{color:var(--accent)}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-
-    header{
-      display:flex;align-items:center;justify-content:space-between;gap:16px; padding:8px 0 18px;
-    }
-    .brand{
-      display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.2px
-    }
-    .brand .logo{width:32px;height:32px;border-radius:10px;background:
-      conic-gradient(from 210deg, var(--accent), var(--accent-2));
-      box-shadow: inset 0 0 0 2px #0005, 0 6px 14px #0008;
-    }
-    .badge{font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:#b7c3cf}
-
-    .grid{
-      display:grid;gap:18px;grid-template-columns:1fr; 
-    }
-    @media (min-width: 980px){
-      .grid{grid-template-columns: 1.1fr .9fr}
+    :root {
+      --mint-05: #f5fbf5;
+      --mint-10: #edf7f0;
+      --mint-20: #d7f0de;
+      --mint-40: #a9e0be;
+      --mint-60: #7acb99;
+      --mint-70: #5cb57f;
+      --mint-90: #1d6c3f;
+      --text-strong: #1d2d24;
+      --text-muted: #4f6457;
+      --card-bg: #ffffff;
+      --border: #dbe7d9;
+      --shadow: 0 25px 60px rgba(70, 100, 80, 0.12);
+      --radius-lg: 32px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
     }
 
-    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
-      border:1px solid var(--border); border-radius: var(--radius); padding:18px; box-shadow: var(--shadow);
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1100px 800px at -10% -20%, rgba(122, 203, 153, 0.25), transparent 65%),
+        radial-gradient(900px 600px at 120% 20%, rgba(217, 244, 225, 0.7), transparent 70%),
+        var(--mint-05);
+      color: var(--text-strong);
+      line-height: 1.6;
+      padding: 28px 16px 80px;
     }
-    .card h2{margin:0 0 12px 0; font-size:18px; font-weight:700}
-    .sub{color:#a7b3c0;font-size:13px;margin-top:6px}
-    label{font-weight:600;font-size:13px;margin-bottom:8px;display:block;color:#c7d3df}
 
-    .input, textarea{width:100%;background:#0e1217;border:1px solid var(--border); border-radius:12px; color:var(--text);
-      padding:12px 14px; font-size:14px; outline:none; transition:.15s border-color ease;}
-    .input:focus, textarea:focus{border-color:#2a3340}
-    textarea{min-height:100px;resize:vertical}
+    a { color: var(--mint-90); }
 
-    .row{display:grid;grid-template-columns:1fr;gap:12px}
-    @media (min-width:680px){.row{grid-template-columns:1fr 1fr}}
-
-    .drop{
-      border:1.5px dashed #2a3340; border-radius:12px; padding:14px; display:flex; align-items:center; gap:12px;
-      background:#0e1217; cursor:pointer; transition:.15s border-color ease, .15s background ease;
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
     }
-    .drop:hover{border-color:#3a4654;background:#0f1419}
-    .drop input{display:none}
 
-    .btns{display:flex; gap:10px; flex-wrap:wrap}
-    .btn{
-      border:none; background:linear-gradient(180deg,#1a2230,#121720); color:var(--text); padding:12px 14px; 
-      border-radius:12px; font-weight:700; cursor:pointer; border:1px solid #263042; box-shadow: inset 0 1px 0 #ffffff0a;
+    .top {
+      text-align: center;
+      margin-bottom: 24px;
     }
-    .btn[aria-busy="true"]{opacity:.7;pointer-events:none}
-    .btn.primary{background:linear-gradient(180deg, #2b67ff, #214ed9); border-color:#2750d7}
-    .btn.ghost{background:transparent}
 
-    /* Verdict */
-    .verdict-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-    .ring{
-      --pct: 0; width:110px; height:110px; border-radius:50%;
-      background: conic-gradient(var(--ring) calc(360deg - (var(--pct) * 3.6deg)), var(--danger) 0);
-      display:grid; place-items:center; position:relative; isolation:isolate;
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 26px;
+      letter-spacing: 0.3px;
+      color: var(--mint-90);
     }
-    .ring::before{content:""; position:absolute; inset:8px; border-radius:50%; background:#0d1116; border:1px solid var(--border)}
-    .ring > span{position:relative; font-weight:800; font-size:20px}
 
-    .pill{padding:8px 12px; border-radius:999px; font-weight:800; font-size:12px; letter-spacing:.3px; text-transform:uppercase}
-    .pill.fake{background:#3d0e16; color:#ff9aa6; border:1px solid #5e1c26}
-    .pill.caution{background:#3a2b0d; color:#ffe08a; border:1px solid #5b4415}
-    .pill.real{background:#0f2b1c; color:#99f5bf; border:1px solid #1d5a3b}
+    .leaf {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.95), transparent 65%),
+        linear-gradient(135deg, var(--mint-40), var(--mint-70));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 15px 30px rgba(92, 181, 127, 0.35);
+    }
 
-    .explain{font-size:14px; color:#cbd6e2}
-    .list{margin:6px 0 0 0; padding-left:18px}
+    .tagline {
+      margin: 12px auto 0;
+      max-width: 540px;
+      font-size: 18px;
+      color: var(--text-muted);
+    }
 
-    .bars{display:grid; gap:8px}
-    .bar{display:grid; grid-template-columns:160px 1fr; align-items:center; gap:10px}
-    .bar .label{font-size:12px; color:#a7b3c0}
-    .bar .track{height:10px; background:#0d1218; border:1px solid var(--border); border-radius:999px; overflow:hidden}
-    .bar .fill{height:100%; width:0%; background:linear-gradient(90deg, #ff6a7a, #ffd166, #7ee787)}
+    .app-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(122, 203, 153, 0.15);
+    }
 
-    .mini{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-    .mini .chip{border:1px solid var(--border); border-radius:999px; padding:6px 10px; font-size:12px; color:#a7b3c0}
+    @media (max-width: 640px) {
+      body { padding: 18px 14px 60px; }
+      .app-card { padding: 24px; border-radius: var(--radius-md); }
+      .brand { font-size: 22px; }
+      .leaf { width: 40px; height: 40px; font-size: 20px; }
+    }
 
-    .muted{color:#8c98a6}
-    .hidden{display:none}
+    .intro {
+      background: var(--mint-10);
+      border: 1px solid var(--mint-20);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      font-size: 16px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 26px;
+    }
 
-    footer{margin:30px 0 20px; color:#97a5b4; font-size:12px}
-    .hr{height:1px; background:linear-gradient(90deg, transparent, #20252c, transparent); margin:16px 0}
+    .intro strong { color: var(--mint-90); }
+
+    .intro svg { flex-shrink: 0; color: var(--mint-70); }
+
+    label { font-weight: 600; display: block; margin-bottom: 8px; font-size: 16px; }
+
+    .input-area { display: grid; gap: 22px; }
+
+    .drop {
+      border: 2px dashed var(--mint-40);
+      background: #fbfefb;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .drop.drag {
+      border-color: var(--mint-70);
+      background: #f0fbf3;
+    }
+
+    .drop svg { color: var(--mint-70); }
+    .drop div strong { font-size: 17px; display: block; color: var(--mint-90); }
+    .drop div span { color: var(--text-muted); font-size: 14px; display: block; margin-top: 4px; }
+
+    .drop input { display: none; }
+
+    textarea, .input {
+      width: 100%;
+      font-size: 16px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border);
+      background: #ffffff;
+      color: var(--text-strong);
+      box-shadow: inset 0 1px 2px rgba(76, 112, 90, 0.08);
+      min-height: 130px;
+      resize: vertical;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus, .input:focus {
+      outline: none;
+      border-color: var(--mint-60);
+      box-shadow: 0 0 0 4px rgba(122, 203, 153, 0.15);
+    }
+
+    .input { min-height: unset; height: 52px; }
+
+    .helper {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--mint-60), var(--mint-70));
+      color: #fff;
+      box-shadow: 0 12px 25px rgba(92, 181, 127, 0.3);
+    }
+
+    .btn.ghost {
+      background: var(--mint-10);
+      color: var(--mint-90);
+      border: 1px solid rgba(92, 181, 127, 0.35);
+    }
+
+    .btn[aria-busy="true"] { opacity: 0.6; pointer-events: none; }
+
+    .status-pill {
+      background: rgba(122, 203, 153, 0.15);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+      color: var(--mint-90);
+    }
+
+    .result-area {
+      margin-top: 34px;
+      border-top: 1px solid rgba(122, 203, 153, 0.25);
+      padding-top: 28px;
+      display: grid;
+      gap: 26px;
+    }
+
+    .verdict {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      background: #f4fbf6;
+      border: 1px solid rgba(122, 203, 153, 0.3);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .face {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid rgba(122, 203, 153, 0.45);
+      display: grid;
+      place-items: center;
+      font-size: 42px;
+    }
+
+    .verdict-label { font-size: 15px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .verdict-text { font-size: 22px; font-weight: 700; color: var(--mint-90); }
+    .reason { color: var(--text-muted); font-size: 15px; margin-top: 6px; }
+
+    .metrics {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .metric {
+      background: #ffffff;
+      border: 1px solid rgba(122, 203, 153, 0.25);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .metric-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .metric-head strong { font-size: 20px; color: var(--mint-90); }
+
+    .meter {
+      height: 12px;
+      background: var(--mint-10);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(122, 203, 153, 0.25);
+    }
+
+    .meter .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--mint-40), var(--mint-70));
+      border-radius: 999px;
+      width: 0%;
+    }
+
+    .metric small {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    details {
+      border: 1px solid rgba(122, 203, 153, 0.25);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      background: #ffffff;
+    }
+
+    details summary {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--mint-90);
+      outline: none;
+    }
+
+    details ul {
+      margin: 12px 0 0 22px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    details.empty { display: none; }
+
+    .hint {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text-muted);
+      background: var(--mint-10);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
+  <div class="wrap">
+    <header class="top">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <div style="font-size:18px;line-height:1;font-weight:800">GranGuard</div>
-          <div class="sub">“make your grandma safe.”</div>
-        </div>
+        <div class="leaf" aria-hidden="true">🌿</div>
+        GranGuard
       </div>
-      <div class="badge">Draft v1 • single file</div>
+      <p class="tagline">A calm place for grandparents to double-check headlines, links, and messages before they act.</p>
     </header>
 
-    <div class="grid">
-      <!-- Input column -->
-      <section class="card" aria-label="Input">
-        <h2>1) Add evidence</h2>
-        <div class="sub">Paste links, add a claimed brand, or drop screenshots. You can edit OCR text before analysis.</div>
-        <div class="hr"></div>
-
-        <label for="urls">Links (one per line)</label>
-        <textarea id="urls" placeholder="https://example.com\nhttps://t.me/somechannel"></textarea>
-
-        <div class="row">
-          <div>
-            <label for="claimed">Claimed brand/company (optional)</label>
-            <input id="claimed" class="input" placeholder="e.g., PayPal" />
-          </div>
-          <div>
-            <label for="phone">Phone (optional)</label>
-            <input id="phone" class="input" placeholder="e.g., +1 202 555 0119" />
-          </div>
+    <main class="app-card" aria-label="GranGuard checker">
+      <div class="intro">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 7V12L14.5 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <strong>Share whatever looks suspicious.</strong> Drag a picture, paste a link, or type a headline. GranGuard checks red flags and offers a friendly verdict with easy-to-read scores.
         </div>
+      </div>
 
-        <label for="context">Short context (optional)</label>
-        <textarea id="context" placeholder="What happened? Where did you see it? Did they ask for money or passwords?"></textarea>
-
-        <label>Screenshot(s)</label>
-        <div id="drop" class="drop" tabindex="0" role="button" aria-label="Upload screenshots">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 16V4m0 12l-4-4m4 4l4-4" stroke="#9eb1c5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="3" y="16" width="18" height="5" rx="2" stroke="#9eb1c5" stroke-width="1.6"/>
-          </svg>
-          <div>
-            <div style="font-weight:700">Drop images here or click to upload</div>
-            <div class="muted">PNG/JPG/WebP. We’ll OCR them locally in your browser.</div>
-          </div>
-          <input id="file" type="file" accept="image/*" multiple />
-        </div>
-
-        <div id="ocrWrap" class="card" style="margin-top:14px; background:#0b0f14">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px">
-            <h2 style="margin:0">OCR Text (editable)</h2>
-            <span id="ocrStatus" class="badge">idle</span>
-          </div>
-          <textarea id="ocrText" placeholder="Extracted text from screenshots will appear here. You can edit it before analysis."></textarea>
-          <div class="mini">
-            <button id="btnOCR" class="btn">Run OCR</button>
-            <button id="btnClearOCR" class="btn ghost">Clear</button>
-          </div>
-        </div>
-
-        <div class="btns" style="margin-top:12px">
-          <button id="btnAnalyze" class="btn primary">Analyze</button>
-          <button id="btnSample" class="btn ghost">Try sample</button>
-        </div>
-      </section>
-
-      <!-- Output column -->
-      <section class="card" aria-label="Result">
-        <h2>2) Result</h2>
-        <div class="verdict-wrap" style="margin-top:6px">
-          <div class="ring" id="ring" style="--pct:0"><span id="pct">0%</span></div>
-          <div>
-            <div id="pill" class="pill real">REAL</div>
-            <div id="headline" style="font-size:18px;font-weight:800;margin-top:8px">Waiting for input…</div>
-            <div id="oneLine" class="sub" style="margin-top:6px">One‑line: <span class="muted">(empty)</span></div>
-            <div class="mini">
-              <button id="btnCopySimple" class="btn ghost">Copy one‑line</button>
-              <button id="btnCopyDetails" class="btn ghost">Copy details</button>
+      <section class="input-area" aria-label="Upload and describe">
+        <div>
+          <label for="drop">Drop image or file</label>
+          <div id="drop" class="drop" tabindex="0" role="button" aria-label="Upload screenshots or photos">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 16V4m0 12l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="3" y="16" width="18" height="5" rx="2.4" stroke="currentColor" stroke-width="1.7"/>
+            </svg>
+            <div>
+              <strong>Drop photos or click to choose</strong>
+              <span>PNG, JPG, WebP. We'll read the text for you.</span>
             </div>
+            <input id="file" type="file" accept="image/*" multiple />
           </div>
         </div>
-
-        <div class="hr"></div>
 
         <div>
-          <div class="explain" id="explain">Add links or run OCR, then click Analyze.</div>
-          <ul class="list" id="flags"></ul>
+          <label for="note">Paste the message, headline, or link</label>
+          <textarea id="note" placeholder="Example: &quot;Breaking: Local bank is closing tomorrow – click here to move your savings.&quot;"></textarea>
+          <div class="helper">GranGuard looks for scam wording, missing sources, and payment demands. You can paste several links or sentences together.</div>
         </div>
 
-        <div class="hr"></div>
-
-        <div class="bars" id="bars">
-          <!-- dynamic risk bars -->
+        <div>
+          <label for="source">Who does it claim to be from? <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+          <input id="source" class="input" placeholder="e.g., My bank, City Council, or Aunt Mabel" />
         </div>
 
-        <div class="mini" style="margin-top:14px">
-          <span class="chip">No server • All local</span>
-          <span class="chip">Editable OCR</span>
-          <span class="chip">One‑word verdict</span>
+        <div class="actions">
+          <button id="btnAnalyze" class="btn primary">Check it</button>
+          <button id="btnSample" class="btn ghost" type="button">See an example</button>
+          <button id="btnOCR" class="btn ghost" type="button">Scan images for text</button>
+          <span id="ocrStatus" class="status-pill">No images yet</span>
         </div>
       </section>
-    </div>
+
+      <section class="result-area" aria-live="polite">
+        <div class="verdict">
+          <div id="verdictIcon" class="face" aria-hidden="true">🙂</div>
+          <div>
+            <div class="verdict-label">Verdict</div>
+            <div id="verdictText" class="verdict-text">Waiting for information…</div>
+            <div id="verdictReason" class="reason">Drop a note or image above and press &ldquo;Check it&rdquo;.</div>
+          </div>
+        </div>
+
+        <div id="metrics" class="metrics" aria-label="Scores"></div>
+
+        <details id="detailsBlock" class="details empty">
+          <summary>What we noticed</summary>
+          <ul id="flags"></ul>
+        </details>
+
+        <p class="hint">Demo mode: this prototype uses simple local rules to illustrate the experience. Connect your own ChatGPT or fact-checking API in production for live verification.</p>
+      </section>
+    </main>
 
     <footer>
-      <div class="hr"></div>
-      <div>GranGuard is a consumer safety demo. It does not give legal/financial advice. If you already paid or shared credentials, contact your bank/platform using numbers from their official website.</div>
+      GranGuard is a concept demo to help older adults pause before responding to possible scams or fake news. It does not replace advice from trusted family, banks, or local authorities.
     </footer>
   </div>
 
   <script>
-    // ===== Utilities =====
     const byId = (id) => document.getElementById(id);
-    const urlsEl = byId('urls');
-    const claimedEl = byId('claimed');
-    const phoneEl = byId('phone');
-    const contextEl = byId('context');
-    const fileInput = byId('file');
     const drop = byId('drop');
-    const ocrText = byId('ocrText');
-    const ocrStatus = byId('ocrStatus');
-    const btnOCR = byId('btnOCR');
-    const btnClearOCR = byId('btnClearOCR');
-
+    const fileInput = byId('file');
+    const noteEl = byId('note');
+    const sourceEl = byId('source');
     const btnAnalyze = byId('btnAnalyze');
     const btnSample = byId('btnSample');
-    const pctEl = byId('pct');
-    const ringEl = byId('ring');
-    const pillEl = byId('pill');
-    const headlineEl = byId('headline');
-    const oneLineEl = byId('oneLine');
-    const explainEl = byId('explain');
+    const btnOCR = byId('btnOCR');
+    const ocrStatus = byId('ocrStatus');
+    const verdictIcon = byId('verdictIcon');
+    const verdictText = byId('verdictText');
+    const verdictReason = byId('verdictReason');
+    const metricsEl = byId('metrics');
+    const detailsBlock = byId('detailsBlock');
     const flagsEl = byId('flags');
-    const barsEl = byId('bars');
-    const btnCopySimple = byId('btnCopySimple');
-    const btnCopyDetails = byId('btnCopyDetails');
 
-    // Drag & drop
-    drop.addEventListener('click', () => fileInput.click());
-    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
-    drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
-    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+    let images = [];
 
-    let images = []; // store File objects
-
-    function handleFiles(fileList){
-      images = [...fileList].filter(f => f.type.startsWith('image/'));
-      ocrStatus.textContent = images.length ? `${images.length} image(s) ready` : 'idle';
+    function handleFiles(fileList) {
+      images = [...fileList].filter((f) => f.type.startsWith('image/'));
+      if (images.length) {
+        const totalSize = images.reduce((sum, file) => sum + file.size, 0);
+        const mb = (totalSize / (1024 * 1024)).toFixed(1);
+        ocrStatus.textContent = `${images.length} image${images.length > 1 ? 's' : ''} ready (${mb} MB)`;
+      } else {
+        ocrStatus.textContent = 'No images yet';
+      }
     }
 
-    // ===== OCR with Tesseract =====
-    async function runOCR(){
-      if (!images.length){
-        ocrStatus.textContent = 'no images';
+    drop.addEventListener('click', () => fileInput.click());
+    drop.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      drop.classList.add('drag');
+    });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('drag');
+      handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    async function runOCR() {
+      if (!images.length) {
+        ocrStatus.textContent = 'No images to scan';
         return;
       }
-      btnOCR.setAttribute('aria-busy','true');
-      ocrStatus.textContent = 'starting…';
+      btnOCR.setAttribute('aria-busy', 'true');
+      ocrStatus.textContent = 'Starting scan…';
       let text = '';
-      for (let i=0;i<images.length;i++){
+      for (let i = 0; i < images.length; i++) {
         const file = images[i];
-        ocrStatus.textContent = `OCR ${i+1}/${images.length}…`;
-        try{
+        ocrStatus.textContent = `Scanning ${i + 1} of ${images.length}…`;
+        try {
           const { data } = await Tesseract.recognize(file, 'eng', {
-            logger: m => {
-              if (m.status === 'recognizing text'){
-                ocrStatus.textContent = `OCR ${i+1}/${images.length}… ${Math.round(m.progress*100)}%`;
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                ocrStatus.textContent = `Scanning ${i + 1} of ${images.length}… ${Math.round(m.progress * 100)}%`;
               }
-            }
+            },
           });
           text += '\n' + (data.text || '');
-        }catch(err){
+        } catch (err) {
           console.error('OCR error', err);
         }
       }
-      ocrText.value = (ocrText.value + '\n' + text).trim();
+      if (text.trim()) {
+        noteEl.value = `${noteEl.value}\n${text}`.trim();
+        ocrStatus.textContent = 'Text added below';
+      } else {
+        ocrStatus.textContent = 'No text found';
+      }
       btnOCR.removeAttribute('aria-busy');
-      ocrStatus.textContent = 'done';
     }
-    btnOCR.addEventListener('click', runOCR);
-    btnClearOCR.addEventListener('click', () => { ocrText.value = ''; ocrStatus.textContent = 'cleared'; });
 
-    // ===== Domain/URL helpers =====
-    function parseUrls(raw){
-      const lines = (raw||'').split(/\n|\s|,/).map(s=>s.trim()).filter(Boolean);
+    btnOCR.addEventListener('click', runOCR);
+
+    function parseUrls(raw) {
+      const tokens = (raw || '').split(/\s|\n|,/).map((s) => s.trim()).filter(Boolean);
       const urls = [];
-      for (const s of lines){
-        try{
-          const u = new URL(s);
+      for (const token of tokens) {
+        let candidate = token;
+        if (/^[\w.-]+\.[a-z]{2,}$/i.test(candidate) && !/^https?:/i.test(candidate)) {
+          candidate = 'https://' + candidate;
+        }
+        try {
+          const u = new URL(candidate);
           urls.push(u);
-        }catch{ /* ignore invalid */ }
+        } catch (err) {
+          // ignore invalid
+        }
       }
       return urls;
     }
-    function baseDomain(host){
-      // naive registrable domain: join last two labels, or keep host if ip/localhost
+
+    function baseDomain(host) {
       const parts = host.split('.');
       if (parts.length <= 2) return host.toLowerCase();
-      const tlds2 = ['co.uk','com.au','co.nz','com.br','com.tr'];
+      const tlds2 = ['co.uk', 'com.au', 'co.nz', 'com.br', 'com.tr'];
       const last2 = parts.slice(-2).join('.');
       const last3 = parts.slice(-3).join('.');
       if (tlds2.includes(last3)) return last3.toLowerCase();
       return last2.toLowerCase();
     }
-    function sld(host){
+
+    function sld(host) {
       const bd = baseDomain(host);
       return bd.split('.')[0];
     }
-    function normalizeBrand(str){
-      return (str||'')
+
+    function normalizeBrand(str) {
+      return (str || '')
         .toLowerCase()
-        .replace(/(inc\.?|ltd\.?|llc|bv|gmbh|s\.?a\.?\b|co\.?)/g,'')
-        .replace(/[^a-z0-9]/g,'')
+        .replace(/(inc\.?|ltd\.?|llc|bv|gmbh|s\.?a\.?\b|co\.?)/g, '')
+        .replace(/[^a-z0-9]/g, '')
         .trim();
     }
 
-    function looksHomoglyphy(domain){
-      // simple checks: suspicious chars replaced in well-known brands
-      const map = { '0':'o','1':'l','3':'e','5':'s','7':'t','@':'a','$':'s','¡':'i','¡':'i' };
+    function looksHomoglyphy(domain) {
+      const map = { '0': 'o', '1': 'l', '3': 'e', '5': 's', '7': 't', '@': 'a', '$': 's' };
       const d = domain.toLowerCase();
       let sus = 0;
-      for (const [k,v] of Object.entries(map)){
-        if (d.includes(k)) sus++;
+      for (const key of Object.keys(map)) {
+        if (d.includes(key)) sus++;
       }
-      // hyphenated three+ parts or random digits
-      if ((d.match(/-/g)||[]).length>=2) sus++;
+      if ((d.match(/-/g) || []).length >= 2) sus++;
       if (/\d{3,}/.test(d)) sus++;
-      return sus>=2;
+      return sus >= 2;
     }
 
-    // ===== Heuristic scoring =====
-    function analyze(){
-      // Collect inputs
-      const urlObjs = parseUrls(urlsEl.value);
-      const phones = (phoneEl.value||'').match(/\+?[\d\s\-()]{7,}/g) || [];
-      const brand = claimedEl.value.trim();
-      const ctx = contextEl.value.trim();
-      const text = ocrText.value + (ctx? ('\n'+ctx):'');
-      const textLower = text.toLowerCase();
+    function analyze() {
+      const rawText = noteEl.value || '';
+      const brand = sourceEl.value.trim();
+      const urlObjs = parseUrls(rawText);
+      const textLower = rawText.toLowerCase();
+      const phones = (rawText.match(/\+?[\d\s\-()]{7,}/g) || []).map((p) => p.trim());
 
-      const foundDomains = urlObjs.map(u=>u.host.toLowerCase());
+      const foundDomains = urlObjs.map((u) => u.host.toLowerCase());
       const foundSLDs = foundDomains.map(sld);
 
-      const art = {
-        found_domains: foundDomains,
-        found_handles: (text.match(/@[a-z0-9_\.\-]{3,}/gi) || []),
-        found_phones: phones,
-        payment_methods_detected: [],
-        entities_claimed: brand? [brand] : [],
-        key_phrases: []
+      const KW = {
+        urgency: ['urgent', 'immediately', 'final notice', 'limited time', 'only \\d+ left', 'act now', 'verify now', '24 hours'],
+        threats: ['account.*(suspend|close|terminate)', 'legal action', 'police', 'lawsuit', 'pay a fine'],
+        rewards: ['you(?:’|\'|’)?ve won', 'congratulations', 'gift', 'prize', 'jackpot', 'bonus'],
+        payments: ['bank transfer', 'wire', 'crypto', 'bitcoin', 'gift card', 'western union', 'moneygram', 'usdt', 'trx'],
+        pii: ['otp', 'one[- ]time password', 'seed phrase', 'mnemonic', 'recovery phrase', 'cvv', 'card number', 'routing number'],
+        news: ['breaking', 'shocking', "you won\'t believe", 'share before', "media won\'t", 'truth about'],
+        policy: ['privacy policy', 'refund', 'returns', 'terms', 'contact', 'imprint', 'address'],
       };
 
-      // keywords
-      const KW = {
-        urgency:[ 'urgent','immediately','final notice','limited time','only \d+ left','act now','verify now','24 hours' ],
-        threats:[ 'account.*(suspend|close|terminate)','legal action','police','lawsuit','pay a fine' ],
-        rewards:[ 'you(?:’|\')?ve won','congratulations','gift','prize','jackpot','bonus' ],
-        payments:[ 'bank transfer','wire','crypto','bitcoin','gift card','western union','moneygram','usdt','trx' ],
-        pii:[ 'otp','one[- ]time password','seed phrase','mnemonic','recovery phrase','cvv','card number','routing number' ],
-        news:[ 'breaking','shocking','you won\'t believe','share before','media won\'t','truth about' ],
-        policy:[ 'privacy policy','refund','returns','terms','contact','imprint','address' ]
-      };
-      function countMatches(patterns){
-        let n=0; const notes=[];
-        for(const p of patterns){
-          const re=new RegExp(p,'i');
-          const m = text.match(re);
-          if(m){ n++; notes.push(m[0]); }
+      function countMatches(patterns) {
+        let n = 0;
+        const notes = [];
+        for (const pattern of patterns) {
+          const re = new RegExp(pattern, 'i');
+          const match = rawText.match(re);
+          if (match) {
+            n++;
+            notes.push(match[0]);
+          }
         }
         return { n, notes };
       }
@@ -407,88 +596,129 @@
       const payments = countMatches(KW.payments);
       const pii = countMatches(KW.pii);
       const newsSens = countMatches(KW.news);
-      const hasPolicyWords = countMatches(KW.policy).n>0;
+      const hasPolicyWords = countMatches(KW.policy).n > 0;
 
-      // Payment methods detected (from text heuristics)
-      art.payment_methods_detected = [ ...new Set([ ...payments.notes.map(x=>x.toLowerCase()) ]) ];
-
-      // Identity & consistency
-      let idScore = 0; const idNotes = [];
-      if (brand && foundDomains.length){
+      let idScore = 0;
+      const idNotes = [];
+      if (brand && foundDomains.length) {
         const nBrand = normalizeBrand(brand);
-        for (const d of foundDomains){
-          const dSLD = sld(d);
-          if (!dSLD.includes(nBrand) && !nBrand.includes(dSLD)){
-            idScore += 40; idNotes.push(`domain ${d} doesn\'t match brand ${brand}`);
+        for (const domain of foundDomains) {
+          const domainSLD = sld(domain);
+          if (!domainSLD.includes(nBrand) && !nBrand.includes(domainSLD)) {
+            idScore += 40;
+            idNotes.push(`Domain ${domain} does not match ${brand}`);
           }
-          if (looksHomoglyphy(d)){ idScore += 25; idNotes.push(`suspicious domain pattern: ${d}`); }
+          if (looksHomoglyphy(domain)) {
+            idScore += 25;
+            idNotes.push(`Suspicious spelling in ${domain}`);
+          }
         }
       }
-      if (foundDomains.some(d=>/-.+-.+/.test(d))) { idScore += 10; idNotes.push('hyphenated domain'); }
-      if (foundDomains.some(d=>/support|secure|verify|help/.test(d))) { idScore += 10; idNotes.push('impersonation keyword in domain'); }
+      if (foundDomains.some((d) => /-.+-.+/.test(d))) {
+        idScore += 10;
+        idNotes.push('Domain uses multiple hyphenated words');
+      }
+      if (foundDomains.some((d) => /support|secure|verify|help/i.test(d))) {
+        idScore += 10;
+        idNotes.push('Support/secure wording inside domain');
+      }
       idScore = Math.min(100, idScore);
 
-      // Technical hygiene
-      let techScore = 0; const techNotes = [];
-      if (payments.n>0){ techScore += 25; techNotes.push('non‑reversible/crypto/gift card mentioned'); }
-      if (textLower.includes('http://')){ techScore += 10; techNotes.push('non‑HTTPS link referenced'); }
-      if (/trust|secure|verified/.test(textLower) && /badge|logo/.test(textLower)) { techScore += 10; techNotes.push('fake trust badge language'); }
-      if (!hasPolicyWords && text.trim().length>40){ techScore += 20; techNotes.push('missing policy/contact terms in text'); }
+      let techScore = 0;
+      const techNotes = [];
+      if (payments.n > 0) {
+        techScore += 25;
+        techNotes.push('Mentions non-refundable payments like crypto or gift cards');
+      }
+      if (textLower.includes('http://')) {
+        techScore += 10;
+        techNotes.push('Links use insecure http://');
+      }
+      if (/trust|secure|verified/.test(textLower) && /badge|logo/.test(textLower)) {
+        techScore += 10;
+        techNotes.push('Mentions fake trust badges');
+      }
+      if (!hasPolicyWords && rawText.trim().length > 40) {
+        techScore += 20;
+        techNotes.push('No policy or contact information mentioned');
+      }
       techScore = Math.min(100, techScore);
 
-      // Social engineering
-      let socScore = 0; const socNotes = [];
-      if (urgency.n>0){ socScore += 20; socNotes.push('urgency'); art.key_phrases.push(...urgency.notes); }
-      if (threats.n>0){ socScore += 30; socNotes.push('threatening language'); art.key_phrases.push(...threats.notes); }
-      if (rewards.n>0){ socScore += 20; socNotes.push('reward bait'); art.key_phrases.push(...rewards.notes); }
-      if (pii.n>0){ socScore += 30; socNotes.push('requests sensitive data'); art.key_phrases.push(...pii.notes); }
+      let socScore = 0;
+      const socNotes = [];
+      if (urgency.n > 0) {
+        socScore += Math.min(25, urgency.n * 12);
+        socNotes.push('Uses urgent language');
+      }
+      if (threats.n > 0) {
+        socScore += Math.min(25, threats.n * 12);
+        socNotes.push('Threatens account closures or fines');
+      }
+      if (rewards.n > 0) {
+        socScore += Math.min(25, rewards.n * 12);
+        socNotes.push('Promises winnings or gifts');
+      }
+      if (pii.n > 0) {
+        socScore += 20;
+        socNotes.push('Asks for sensitive information like passwords or card numbers');
+      }
       socScore = Math.min(100, socScore);
 
-      // Company clues
-      let compScore = 0; const compNotes = [];
-      if (!/\b(address|street|st\.|road|rd\.|suite|privacy|terms|imprint|contact)\b/i.test(text)){
-        compScore += 20; compNotes.push('no obvious address/policy terms');
+      let compScore = 0;
+      const compNotes = [];
+      if (!brand && rawText.trim()) {
+        compScore += 20;
+        compNotes.push('Sender not identified');
       }
-      if (/\b(gmail\.com|yahoo\.com|outlook\.com)\b/i.test(text)){
-        compScore += 10; compNotes.push('free mailbox as contact');
+      if (brand && rawText && !new RegExp(brand, 'i').test(rawText)) {
+        compScore += 15;
+        compNotes.push('Brand named but not shown in message');
       }
-      if (/\bstock photo\b/i.test(text)){ compScore += 5; compNotes.push('stock photo mention'); }
       compScore = Math.min(100, compScore);
 
-      // Phone / message clues
-      let phoneScore = 0; const phoneNotes = [];
-      if (phones.length && (payments.n>0 || socScore>20)){
-        phoneScore += 30; phoneNotes.push('money request via unknown number');
+      let phoneScore = 0;
+      const phoneNotes = [];
+      if (phones.length && (payments.n > 0 || socScore > 20)) {
+        phoneScore += 30;
+        phoneNotes.push('Money request tied to an unknown phone number');
       }
-      if (/(whatsapp|telegram|move to chat)/i.test(text)){
-        phoneScore += 15; phoneNotes.push('move off‑platform');
+      if (/(whatsapp|telegram|move to chat)/i.test(rawText)) {
+        phoneScore += 15;
+        phoneNotes.push('Pushes conversation to private chat apps');
       }
       phoneScore = Math.min(100, phoneScore);
 
-      // Fake news claims (light)
-      let newsScore = 0; const newsNotes = [];
-      if (newsSens.n>0){ newsScore += 25; newsNotes.push('sensational headline style'); }
-      if (!/\b(source|according to|reuters|ap|bbc|guardian|press release|official)\b/i.test(text) && text.trim()){
-        newsScore += 15; newsNotes.push('no clear sources cited');
+      let newsScore = 0;
+      const newsNotes = [];
+      if (newsSens.n > 0) {
+        newsScore += 25;
+        newsNotes.push('Sensational headline style');
       }
-      if (!/\b\d{4}\b/.test(text)){ newsScore += 5; newsNotes.push('no dates visible'); }
+      if (!/\b(source|according to|reuters|ap|bbc|guardian|press release|official)\b/i.test(rawText) && rawText.trim()) {
+        newsScore += 15;
+        newsNotes.push('No clear sources cited');
+      }
+      if (!/\b\d{4}\b/.test(rawText)) {
+        newsScore += 5;
+        newsNotes.push('No dates mentioned');
+      }
       newsScore = Math.min(100, newsScore);
 
-      // Deepfake signals – heuristic placeholder
-      let dfScore = 0; const dfNotes = [];
-      if (/deepfake|ai[- ]generated|midjourney|stable diffusion|face swap/i.test(text)){
-        dfScore += 35; dfNotes.push('AI/manipulation keywords present');
+      let dfScore = 0;
+      const dfNotes = [];
+      if (/deepfake|ai[- ]generated|midjourney|stable diffusion|face swap/i.test(rawText)) {
+        dfScore += 35;
+        dfNotes.push('Mentions AI-generated media');
       }
 
-      // Weights
       const weights = {
-        identity_consistency: .25,
-        technical_hygiene: .15,
-        social_engineering: .20,
-        company_clues: .10,
-        phone_message: .10,
-        fake_news_claims: .10,
-        deepfake_signals: .10
+        identity_consistency: 0.25,
+        technical_hygiene: 0.15,
+        social_engineering: 0.2,
+        company_clues: 0.1,
+        phone_message: 0.1,
+        fake_news_claims: 0.1,
+        deepfake_signals: 0.1,
       };
 
       const subs = {
@@ -498,81 +728,107 @@
         company_clues: { score: compScore, notes: compNotes },
         phone_message: { score: phoneScore, notes: phoneNotes },
         fake_news_claims: { score: newsScore, notes: newsNotes },
-        deepfake_signals: { score: dfScore, notes: dfNotes }
+        deepfake_signals: { score: dfScore, notes: dfNotes },
       };
 
       let risk = 0;
-      for (const [k,v] of Object.entries(subs)){
-        risk += (v.score || 0) * (weights[k] || 0);
+      for (const [key, value] of Object.entries(subs)) {
+        risk += (value.score || 0) * (weights[key] || 0);
       }
       const riskScore = Math.round(risk);
 
-      // Verdict one‑word + color
-      let verdict = 'REAL';
-      let pillClass = 'real';
-      if (riskScore >= 60){ verdict = 'FAKE'; pillClass = 'fake'; }
-      else if (riskScore >= 40){ verdict = 'CAUTION'; pillClass = 'caution'; }
-
-      // Top red flags
-      const redflags = Object.entries(subs)
-        .flatMap(([k,v]) => (v.notes||[]).map(n => ({k, n, s:v.score})))
-        .sort((a,b)=>b.s-a.s)
-        .slice(0,6)
-        .map(x=>x.n.replace(/\.$/,'').trim());
-
-      // Render UI
-      ringEl.style.setProperty('--pct', riskScore);
-      pctEl.textContent = riskScore + '%';
-      pillEl.textContent = verdict;
-      pillEl.className = `pill ${pillClass}`;
-      headlineEl.textContent = verdict === 'REAL' ? 'Low risk signals overall.' :
-        (verdict === 'CAUTION' ? 'Some red flags. Verify independently.' : 'Multiple red flags. Do NOT proceed.');
-      oneLineEl.innerHTML = `One‑line: <strong>${verdict} ${riskScore}%</strong>`;
-
-      explainEl.textContent = redflags.length ? 'Why we think this:' : 'No strong signals found.';
-      flagsEl.innerHTML = '';
-      redflags.forEach(f=>{
-        const li=document.createElement('li'); li.textContent = f; flagsEl.appendChild(li);
-      });
-
-      // Bars
-      const labels = {
-        identity_consistency: 'Identity & Consistency',
-        technical_hygiene: 'Technical Hygiene',
-        social_engineering: 'Social Engineering',
-        company_clues: 'Company Clues',
-        phone_message: 'Phone/Message',
-        fake_news_claims: 'Fake News Heuristics',
-        deepfake_signals: 'Deepfake Signals'
-      };
-      barsEl.innerHTML = '';
-      for (const [k,v] of Object.entries(subs)){
-        const row = document.createElement('div'); row.className='bar';
-        const lab = document.createElement('div'); lab.className='label'; lab.textContent = `${labels[k]} (${v.score})`;
-        const track = document.createElement('div'); track.className='track';
-        const fill = document.createElement('div'); fill.className='fill'; fill.style.width = `${v.score}%`;
-        track.appendChild(fill); row.appendChild(lab); row.appendChild(track); barsEl.appendChild(row);
+      let verdict = 'Looks safe';
+      let icon = '👍';
+      if (riskScore >= 60) {
+        verdict = 'High risk — very likely fake';
+        icon = '👎';
+      } else if (riskScore >= 40) {
+        verdict = 'Not sure — double check';
+        icon = '🤔';
       }
 
-      // Copy helpers
-      const details = `${verdict} ${riskScore}% — ${redflags.join('; ') || 'No strong red flags.'}`;
-      btnCopySimple.onclick = async ()=>{ await navigator.clipboard.writeText(`${verdict} ${riskScore}%`); btnCopySimple.textContent='Copied!'; setTimeout(()=>btnCopySimple.textContent='Copy one‑line',1200)};
-      btnCopyDetails.onclick = async ()=>{ await navigator.clipboard.writeText(details); btnCopyDetails.textContent='Copied!'; setTimeout(()=>btnCopyDetails.textContent='Copy details',1200)};
+      const redflags = Object.entries(subs)
+        .flatMap(([key, value]) => (value.notes || []).map((note) => ({ key, note, score: value.score })))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6)
+        .map((entry) => entry.note.replace(/\.$/, '').trim());
+
+      verdictIcon.textContent = icon;
+      verdictText.textContent = `${verdict} (${riskScore}% risk)`;
+      verdictReason.textContent = redflags[0]
+        ? `Why we think so: ${redflags[0]}.`
+        : 'We did not spot strong warning signs. Still pause and confirm with a trusted source.';
+
+      const metrics = [
+        {
+          label: 'Truth match',
+          value: Math.max(0, Math.min(100, 100 - riskScore)),
+          note: 'Higher means the story lines up with common trustworthy patterns.',
+        },
+        {
+          label: 'Scam risk',
+          value: riskScore,
+          note: 'How strongly the message resembles known scam behaviours.',
+        },
+        {
+          label: 'Source trust',
+          value: Math.max(0, Math.min(100, 100 - subs.identity_consistency.score)),
+          note: 'Do the sender details and links match the claimed source?',
+        },
+        {
+          label: 'Evidence clarity',
+          value: Math.max(
+            0,
+            Math.min(100, 100 - Math.round((subs.social_engineering.score + subs.fake_news_claims.score) / 2))
+          ),
+          note: 'Higher when language is calm and references real sources.',
+        },
+      ];
+
+      metricsEl.innerHTML = '';
+      metrics.forEach((metric) => {
+        const card = document.createElement('div');
+        card.className = 'metric';
+        card.innerHTML = `
+          <div class="metric-head">
+            <span>${metric.label}</span>
+            <strong>${metric.value}%</strong>
+          </div>
+          <div class="meter"><div class="fill" style="width:${metric.value}%"></div></div>
+          <small>${metric.note}</small>
+        `;
+        metricsEl.appendChild(card);
+      });
+
+      flagsEl.innerHTML = '';
+      if (redflags.length) {
+        redflags.forEach((flag) => {
+          const li = document.createElement('li');
+          li.textContent = flag;
+          flagsEl.appendChild(li);
+        });
+        detailsBlock.classList.remove('empty');
+        detailsBlock.open = true;
+      } else {
+        detailsBlock.classList.add('empty');
+        detailsBlock.open = false;
+      }
     }
 
     btnAnalyze.addEventListener('click', analyze);
 
-    // Sample to demo the flow quickly
-    btnSample.addEventListener('click', ()=>{
-      urlsEl.value = 'http://paypalsecure-help.co/support';
-      claimedEl.value = 'PayPal';
-      contextEl.value = 'Got this link via SMS saying my account is locked and to verify now.';
-      ocrText.value = 'Verify now to avoid account termination. Pay with Bitcoin or gift card.';
+    btnSample.addEventListener('click', () => {
+      noteEl.value = `Breaking news: City Bank is closing every branch tomorrow. Transfer your savings now at http://citybank-support-safe.com or text +1 202 555 0119 to keep your funds. Only 24 hours left!`;
+      sourceEl.value = 'City Bank';
       analyze();
     });
 
-    // Accessibility: allow Enter on drop zone to open file picker
-    drop.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); fileInput.click(); }});
+    drop.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
   </script>
 </body>
 </html>
